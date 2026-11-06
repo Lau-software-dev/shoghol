@@ -10,13 +10,13 @@ React rebuild of the design pack in `../topic-04-freelance-gig-board/` (the spec
 
 | Surface | Spec | Route | Owner |
 |---|---|---|---|
-| Home | `01-home.html` | `/` | Emma |
-| Find work | `02-browse.html` | `/browse` | Emma |
+| Home | `01-home.html` | `/` |Emma |
+| Find work | `02-browse.html` | `/browse` |. |
 | Job detail | `03-gig.html` | `/gigs/:gigId` | Karim |
-| Post a job | `04-post.html` | `/post` | Karim |
-| My jobs | `05-mine.html` | `/mine` | Giovanny |
-| Sign in & register | `06-auth.html` | `/signin`, `/register` | Giovanny |
-| Status track (shared) | `components.html` | `/dev/status-track` (preview) | Karim |
+| Post a job | `04-post.html` | `/post` | .m |
+| My jobs | `05-mine.html` | `/mine` | . |
+| Sign in & register | `06-auth.html` | `/signin`, `/register` | Karim|
+| Status track (shared) | `components.html` | `/dev/status-track` (preview) |. |
 
 ## Run it
 
