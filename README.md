@@ -58,6 +58,9 @@ Fonts (Chivo, Karla) are embedded in `frontend/src/fonts.css`, so it works offli
 ```
 frontend/src/
   domain/gigStatus.js        GIG_STATUS, trackFor(status), acceptsOffers(gig)
+  domain/offers.js           the house rule as pure functions: withAcceptedOffer(gig, id), canOffer, isPoster…
+  lib/gigs.js                Phase 1 stand-in for the gigs API (getGig, makeOffer, acceptOffer…), in memory
+  components/Badge.jsx       status vocabulary — <Badge status="open" />, "accepted", "yours"…
   components/StatusTrack.jsx the signature component — <StatusTrack gig={gig} />
   components/TextField.jsx   labelled input; error wired with aria-invalid/-describedby
   components/Button.jsx      variants: propose, commit, secondary, quiet, destroy

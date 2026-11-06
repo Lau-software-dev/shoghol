@@ -4,6 +4,7 @@ import RequireAuth from './auth/RequireAuth'
 import Layout from './layout/Layout'
 import RegisterPage from './pages/auth/RegisterPage'
 import SignInPage from './pages/auth/SignInPage'
+import GigPage from './pages/gig/GigPage'
 import Placeholder from './pages/Placeholder'
 import StatusTrackPreview from './pages/StatusTrackPreview'
 
@@ -16,7 +17,7 @@ export default function App() {
             <Route index element={<Placeholder title="Home" spec="01-home.html" owner="TBD" />} />
             <Route path="browse" element={<Placeholder title="Find work" spec="02-browse.html" owner="TBD" />} />
             {/* Open to everyone: the page itself shows the signed-out variant. */}
-            <Route path="gigs/:gigId" element={<Placeholder title="Job detail" spec="03-gig.html" owner="Karim" />} />
+            <Route path="gigs/:gigId" element={<GigPage />} />
             <Route
               path="post"
               element={
