@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
 import Badge from '../../components/Badge'
@@ -6,8 +6,16 @@ import Button from '../../components/Button'
 import StatusTrack from '../../components/StatusTrack'
 import { buttonClass } from '../../components/buttonStyles'
 import { acceptsOffers } from '../../domain/gigStatus'
-import { isPoster } from '../../domain/offers'
-import * as gigs from '../../lib/gigs'
+import {
+  isPoster,
+  withAcceptedOffer,
+  withCancelled,
+  withClosed,
+  withDelivered,
+  withNewOffer,
+  withRejectedOffer,
+} from '../../domain/offers'
+import { useGigs } from '../../gigs/GigsContext'
 import { longDate, money, shortDate } from '../../lib/format'
 import OfferList from './OfferList'
 import ViewerPanel from './ViewerPanel'
@@ -16,72 +24,52 @@ const LABEL = 'text-[11px] font-bold uppercase tracking-[0.12em] text-muted'
 
 // Job detail (03-gig.html). Three viewers — the poster, another signed-in user, signed out — and the
 // screen changes shape after an accept: the track moves, one offer is marked, the rest are rejected,
-// and the offer form is gone. Everything is drawn from the gig the store returns; nothing is patched
-// locally, so the page cannot show a half-applied accept.
+// and the offer form is gone. The job is read from the shared `gigs` state; every change is a rule
+// from domain/offers.js (whole next job, or throw) followed by one save(), so nothing is half-applied.
+// Only the poster is shown the offer list and the poster's actions: in Phase 1 the rule lives here.
 export default function GigPage() {
   const { gigId } = useParams()
-  const { user, status: authStatus } = useAuth()
-  const [attempt, setAttempt] = useState(0)
-  // Which gig, for whom, which try. An answer for an older key is stale and shows as loading.
-  const key = `${gigId}|${user?.email ?? ''}|${attempt}`
-  const [result, setResult] = useState({ key: null })
-  const [busy, setBusy] = useState(false)
+  const { user } = useAuth()
+  const { gigs, status, retry, save } = useGigs()
   const [failure, setFailure] = useState(null)
   const [announcement, setAnnouncement] = useState('')
 
-  // What a viewer may see depends on who they are, so wait for the session before asking.
-  useEffect(() => {
-    if (authStatus !== 'ready') return
-    let live = true
-    gigs
-      .getGig(gigId, user)
-      .then((gig) => live && setResult({ key, phase: 'ready', gig }))
-      .catch((err) => live && setResult({ key, phase: err.code === 'not_found' ? 'missing' : 'error' }))
-    return () => {
-      live = false
-    }
-  }, [gigId, user, authStatus, key])
+  if (status === 'loading') return <GigSkeleton />
+  if (status === 'error') return <LoadError onRetry={retry} />
 
-  const load = result.key === key ? result : { phase: 'loading' }
-  const setGig = (gig) => setResult({ key, phase: 'ready', gig })
+  const gig = gigs.find((g) => g.id === gigId)
+  if (!gig) return <Missing />
+  const poster = isPoster(gig, user)
 
-  // Run one write. While it runs every action is disabled, so two accepts cannot race.
-  const run = async (call, said) => {
-    setBusy(true)
+  // Apply one rule to this job. If the rule refuses, the job is left exactly as it was.
+  const apply = (rule, said) => {
     setFailure(null)
     try {
-      setGig(await call())
+      save(rule(gig))
       setAnnouncement(said)
     } catch (err) {
       setFailure(err.message)
-    } finally {
-      setBusy(false)
     }
   }
 
-  if (load.phase === 'loading') return <GigSkeleton />
-  if (load.phase === 'missing') return <Missing />
-  if (load.phase === 'error') return <LoadError onRetry={() => setAttempt((n) => n + 1)} />
-
-  const { gig } = load
-  const poster = isPoster(gig, user)
-
   const actions = {
-    // The offer form shows its own errors, so this one throws instead of using `run`.
-    offer: async (fields) => {
-      setGig(await gigs.makeOffer(gig.id, user, fields))
+    // The offer form shows its own errors, so this one throws instead of using `apply`.
+    offer: (fields) => {
+      // One offer per person per job (the rule enforces it), so the email makes a unique id.
+      save(withNewOffer(gig, user, fields, `${gig.id}:${user?.email}`))
       setAnnouncement('Your offer was sent.')
     },
-    cancel: () => run(() => gigs.cancelGig(gig.id, user), 'Job cancelled.'),
-    close: () => run(() => gigs.closeGig(gig.id, user), 'Job closed.'),
-    deliver: () => run(() => gigs.markDelivered(gig.id, user), 'Marked as delivered.'),
+    cancel: () => apply(withCancelled, 'Job cancelled.'),
+    close: () => apply(withClosed, 'Job closed.'),
+    deliver: () => apply((g) => withDelivered(g, user), 'Marked as delivered.'),
   }
   const accept = (offer) =>
-    run(
-      () => gigs.acceptOffer(gig.id, user, offer.id),
+    apply(
+      (g) => withAcceptedOffer(g, offer.id),
       `Accepted ${offer.freelancer.name}’s offer. Every other offer was rejected.`,
     )
-  const reject = (offer) => run(() => gigs.rejectOffer(gig.id, user, offer.id), `Rejected ${offer.freelancer.name}’s offer.`)
+  const reject = (offer) =>
+    apply((g) => withRejectedOffer(g, offer.id), `Rejected ${offer.freelancer.name}’s offer.`)
 
   return (
     <article>
@@ -112,7 +100,7 @@ export default function GigPage() {
           <dt className={`mt-3 ${LABEL}`}>Wanted by</dt>
           <dd className="font-display text-base font-bold text-ink">{longDate(gig.wantedBy)}</dd>
           <dt className={`mt-3 ${LABEL}`}>Offers</dt>
-          <dd className="font-display text-3xl font-bold tabular-nums tracking-tight text-brand-700">{gig.offerCount}</dd>
+          <dd className="font-display text-3xl font-bold tabular-nums tracking-tight text-brand-700">{gig.offers.length}</dd>
         </dl>
       </div>
 
@@ -125,13 +113,13 @@ export default function GigPage() {
         </div>
       )}
 
-      <ViewerPanel gig={gig} user={user} busy={busy} actions={actions} />
+      <ViewerPanel gig={gig} user={user} busy={false} actions={actions} />
 
       {poster && (
         <OfferList
           offers={gig.offers}
           open={acceptsOffers(gig)}
-          busy={busy}
+          busy={false}
           onAccept={accept}
           onReject={reject}
         />
@@ -180,7 +168,7 @@ function LoadError({ onRetry }) {
     <div role="alert" className="rounded-card border border-red-200 bg-red-50 px-6 py-14 text-center">
       <h1 className="font-display text-2xl font-bold tracking-tight text-red-900">This job would not load</h1>
       <p className="mx-auto mt-3 max-w-sm text-sm text-red-900/70">
-        The server did not answer. This usually passes in a moment.
+        The jobs did not arrive. This usually passes in a moment.
       </p>
       <div className="mt-7">
         <Button variant="commit" className="px-3 py-1.5 text-xs" onClick={onRetry}>

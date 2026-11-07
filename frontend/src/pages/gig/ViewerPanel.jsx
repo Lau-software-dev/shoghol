@@ -70,7 +70,7 @@ function PosterPanel({ gig, busy, onCancel, onClose }) {
           }
         >
           <strong className="font-bold">You posted this.</strong>{' '}
-          <span className="text-muted">{peopleOffered(gig.offerCount)}</span>
+          <span className="text-muted">{peopleOffered(gig.offers.length)}</span>
         </Bar>
       )
     case GIG_STATUS.ASSIGNED:
@@ -178,7 +178,7 @@ function FreelancerPanel({ gig, user, busy, onOffer, onDeliver }) {
           )
         }
       >
-        {peopleOffered(gig.offerCount)}{' '}
+        {peopleOffered(gig.offers.length)}{' '}
         <span className="text-muted">You cannot see what they said, and they cannot see you.</span>
       </Bar>
       {writing && <OfferForm budget={gig.budget} onSubmit={onOffer} onCancel={() => setWriting(false)} />}

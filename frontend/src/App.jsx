@@ -1,6 +1,7 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import AuthProvider from './auth/AuthProvider'
 import RequireAuth from './auth/RequireAuth'
+import GigsProvider from './gigs/GigsProvider'
 import Layout from './layout/Layout'
 import RegisterPage from './pages/auth/RegisterPage'
 import SignInPage from './pages/auth/SignInPage'
@@ -8,10 +9,14 @@ import GigPage from './pages/gig/GigPage'
 import Placeholder from './pages/Placeholder'
 import StatusTrackPreview from './pages/StatusTrackPreview'
 
+// Demo switches for the simulated data states: ?simulate=error fails the first load, ?simulate=slow waits 2s.
+const simulate = new URLSearchParams(window.location.search).get('simulate')
+
 export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <GigsProvider delay={simulate === 'slow' ? 2000 : 400} failFirst={simulate === 'error'}>
         <Routes>
           <Route element={<Layout />}>
             <Route index element={<Placeholder title="Home" spec="01-home.html" owner="TBD" />} />
@@ -40,6 +45,7 @@ export default function App() {
             <Route path="*" element={<Placeholder title="Not found" spec="—" owner="—" />} />
           </Route>
         </Routes>
+        </GigsProvider>
       </AuthProvider>
     </BrowserRouter>
   )

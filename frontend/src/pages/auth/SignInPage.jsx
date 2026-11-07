@@ -3,6 +3,7 @@ import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
 import Button from '../../components/Button'
 import TextField from '../../components/TextField'
+import { DEMO_PASSWORD, DEMO_USERS } from '../../auth/demoUsers'
 import AuthCard, { linkClass } from './AuthCard'
 
 export default function SignInPage() {
@@ -13,7 +14,7 @@ export default function SignInPage() {
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState(null) // { code, message } from the server
+  const [error, setError] = useState(null) // { code, message } from AuthProvider
   const [busy, setBusy] = useState(false)
 
   if (user) return <Navigate to={back} replace />
@@ -91,6 +92,31 @@ export default function SignInPage() {
             </p>
           </form>
         </AuthCard>
+
+        {/* Phase 1 has no server: accounts are demo data held in React state. */}
+        <div className="rounded-card border border-line bg-surface px-5 py-4">
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted">Demo accounts</p>
+          <p className="mt-1 text-xs text-muted">
+            Password for all: <code className="font-mono text-ink">{DEMO_PASSWORD}</code>. Pick one to fill the form.
+          </p>
+          <ul className="mt-3 flex flex-wrap gap-2">
+            {DEMO_USERS.slice(0, 3).map((demo) => (
+              <li key={demo.email}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail(demo.email)
+                    setPassword(DEMO_PASSWORD)
+                    setError(null)
+                  }}
+                  className="rounded border border-line bg-paper px-3 py-1.5 text-xs font-bold text-ink hover:border-brand-300"
+                >
+                  {demo.name}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     </div>
   )

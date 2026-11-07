@@ -1,8 +1,10 @@
 import { GIG_STATUS } from '../domain/gigStatus'
 import { OFFER_STATUS } from '../domain/offers'
 
-// The board's starting data: 45 jobs from 13 people. Reloading the page brings it back (no persistence in
-// Phase 1). Every job obeys the house rule — at most one accepted offer, nobody offers on their own job.
+// The board's starting data: 45 jobs from 13 people. GigsProvider puts it in React state; reloading the
+// page brings it back. Every job obeys the house rule — at most one accepted offer, nobody offers on their
+// own job. Emma, Karim, Giovanny, Lea and Njteh are the demo accounts in auth/demoUsers.js, so signing in
+// as one of them makes their jobs and offers yours.
 //
 // Dates are written as days from today, so "wanted in 7 days" is still true whenever the app is opened.
 

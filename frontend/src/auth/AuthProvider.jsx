@@ -1,44 +1,64 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { api } from '../lib/api'
+import { useCallback, useMemo, useState } from 'react'
 import { AuthContext } from './AuthContext'
+import { DEMO_USERS, makeUser, publicUser } from './demoUsers'
+import { validateRegister } from './validateRegister'
 
-// Who is signed in, for the whole app. The session itself is an HttpOnly cookie the page can't read,
-// so the server is asked once on load; sign in / register / sign out update it from their replies.
-export default function AuthProvider({ children }) {
-  const [user, setUser] = useState(null)
-  const [status, setStatus] = useState('loading')
+// Errors carry a code the pages switch on, and a message ready to show.
+const fail = (code, message) => Object.assign(new Error(message), { code })
 
-  useEffect(() => {
-    let live = true
-    api('/auth/me')
-      .then((data) => live && setUser(data.user))
-      .catch(() => live && setUser(null))
-      .finally(() => live && setStatus('ready'))
-    return () => {
-      live = false
-    }
-  }, [])
+const findByEmail = (accounts, email) => accounts.find((a) => a.email === email.trim().toLowerCase())
 
-  const signIn = useCallback(async ({ email, password }) => {
-    const data = await api('/auth/login', { method: 'POST', body: { email, password } })
-    setUser(data.user)
-    return data.user
-  }, [])
+// Who is signed in, for the whole app — held in React state, checked against demo accounts.
+// No server and no storage: a reload signs you out and forgets new accounts.
+// `initialUser` (an email, or a user object) starts someone signed in; tests use it.
+export default function AuthProvider({ children, initialUser = null, accounts: seed = DEMO_USERS }) {
+  const [accounts, setAccounts] = useState(() =>
+    // A signed-in user passed as an object who is not a demo account joins the list.
+    initialUser && typeof initialUser === 'object' && !findByEmail(seed, initialUser.email)
+      ? [...seed, { ...initialUser, email: initialUser.email.toLowerCase() }]
+      : seed,
+  )
+  const [currentEmail, setCurrentEmail] = useState(() =>
+    initialUser ? (initialUser.email ?? initialUser).toLowerCase() : null,
+  )
+  const user = useMemo(
+    () => publicUser(currentEmail ? findByEmail(accounts, currentEmail) : null),
+    [accounts, currentEmail],
+  )
 
-  const register = useCallback(async (fields) => {
-    const data = await api('/auth/signup', { method: 'POST', body: fields })
-    setUser(data.user)
-    return data.user
-  }, [])
+  const signIn = useCallback(
+    async ({ email, password }) => {
+      const account = findByEmail(accounts, email)
+      // Same answer for an unknown email and a wrong password: never say which half was wrong.
+      if (!account || account.password !== password)
+        throw fail('wrong_login', 'That email and password do not match.')
+      setCurrentEmail(account.email)
+      return publicUser(account)
+    },
+    [accounts],
+  )
 
-  const signOut = useCallback(async () => {
-    await api('/auth/logout', { method: 'POST' })
-    setUser(null)
-  }, [])
+  const register = useCallback(
+    async (fields) => {
+      const errors = validateRegister(fields)
+      const [field] = Object.keys(errors)
+      if (field) throw fail(`bad_${field}`, errors[field])
+      if (findByEmail(accounts, fields.email))
+        throw fail('email_taken', 'An account already uses that email. Sign in instead.')
+      const account = makeUser(fields)
+      setAccounts((list) => [...list, account])
+      setCurrentEmail(account.email)
+      return publicUser(account)
+    },
+    [accounts],
+  )
 
+  const signOut = useCallback(async () => setCurrentEmail(null), [])
+
+  // status stays in the shape for callers that waited on a server; with local state it is always ready.
   const value = useMemo(
-    () => ({ user, status, signIn, register, signOut }),
-    [user, status, signIn, register, signOut],
+    () => ({ user, status: 'ready', signIn, register, signOut }),
+    [user, signIn, register, signOut],
   )
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

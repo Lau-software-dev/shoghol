@@ -5,8 +5,8 @@ CSC443 Web Programming · Fall 2026 · Team 404 — Emma Chakkour · Karim Hawa 
 React rebuild of the design pack in `../topic-04-freelance-gig-board/` (the spec — not copied in).
 
 ```
-frontend/   React 19 + Vite + Tailwind CSS 3.4.19 + React Router
-backend/    Node + Express 5 + MongoDB (Mongoose) — JWT cookie auth
+frontend/   React 19 + Vite + Tailwind CSS 3.4.19 + React Router — runs on its own, demo data in React state
+backend/    Node + Express 5 + MongoDB (Mongoose) — JWT cookie auth (not wired to the frontend in Phase 1)
 ```
 
 ## Who builds what
@@ -26,27 +26,25 @@ backend/    Node + Express 5 + MongoDB (Mongoose) — JWT cookie auth
 
 ## Run it
 
-Two terminals.
+The frontend needs no server: sign-in and jobs are demo data held in React state.
 
 ```sh
-# 1 — backend on http://localhost:5000
-cd backend
-npm install
-cp .env.template .env      # fill in MONGO_URI and JWT_SECRET
-npm run dev                # or: npm run dev:memory  (no Atlas needed; data lost on stop)
-
-# 2 — frontend on http://localhost:5173 (passes /api through to the backend)
 cd frontend
 npm install
-npm run dev
+npm run dev                # http://localhost:5173
+npm test
 ```
 
-Tests (no database or `.env` needed — the backend tests start an in-memory MongoDB):
+Demo accounts (password `shoghol123` for all — the sign-in page has buttons that fill them in):
+`emma.chakkour@lau.edu`, `karim.hawa@lau.edu`, `giovanny.raad@lau.edu`, `lea.haddad@lau.edu`,
+`njteh.balian@lau.edu`. Emma posted the logo and translation jobs, Karim the calculus one,
+Giovanny the photo one. Registering adds an account to state; a reload resets everything.
 
-```sh
-cd backend && npm test
-cd frontend && npm test
-```
+Data states are simulated on purpose: jobs arrive after 400 ms (skeleton meanwhile).
+Add `?simulate=error` to any address to make the first load fail (then *Try again*), or
+`?simulate=slow` for a 2-second wait.
+
+The backend is kept for Phase 2 (`cd backend && npm install && npm run dev`, `npm test`).
 
 ## Frontend
 
@@ -59,13 +57,13 @@ Fonts (Chivo, Karla) are embedded in `frontend/src/fonts.css`, so it works offli
 frontend/src/
   domain/gigStatus.js        GIG_STATUS, trackFor(status), acceptsOffers(gig)
   domain/offers.js           the house rule as pure functions: withAcceptedOffer(gig, id), canOffer, isPoster…
-  lib/gigs.js                Phase 1 stand-in for the gigs API (getGig, makeOffer, acceptOffer…), in memory
+  gigs/GigsProvider.jsx      the jobs: ONE array in useState, shared via context — useGigs() → { gigs, status, retry, save, add }
+  gigs/seed.js               the demo jobs it starts from
   components/Badge.jsx       status vocabulary — <Badge status="open" />, "accepted", "yours"…
   components/StatusTrack.jsx the signature component — <StatusTrack gig={gig} />
   components/TextField.jsx   labelled input; error wired with aria-invalid/-describedby
   components/Button.jsx      variants: propose, commit, secondary, quiet, destroy
-  auth/                      AuthProvider, useAuth(), RequireAuth, validateRegister
-  lib/api.js                 api(path, { method, body }) → JSON, throws ApiError(code, message)
+  auth/                      AuthProvider (React state), demoUsers, useAuth(), RequireAuth, validateRegister
   layout/                    site header (account menu) + page shell
   pages/                     surfaces (placeholders until built), auth pages, track preview
 ```
@@ -122,7 +120,28 @@ Controllers `fail(status, code, message)` and the error handler in `app.js` answ
 - **Protect a route**: `router.post("/", verifyToken, handler)` — then `req.userId` is set.
   `<RequireAuth>` in the frontend is convenience only; the API must check on its own.
 - In components: `const { user, status, signIn, register, signOut } = useAuth()`.
+- **Phase 1 frontend**: `AuthProvider` does not call this API. It keeps the accounts and the
+  signed-in user in React state, seeded from `auth/demoUsers.js`, with the same error codes
+  (`wrong_login`, `email_taken`, `bad_*`). In Phase 2, swap its three functions for API calls.
+  Tests sign someone in with `<AuthProvider initialUser="emma.chakkour@lau.edu">`.
 - Not built: password reset and email verification.
+
+### Where the data lives (Phase 1)
+
+The jobs are one array in `useState` inside `GigsProvider`, shared through context, as the brief
+asks ("held in React state"). A page reads `gigs` and changes it in two steps: a pure rule from
+`domain/offers.js` builds the whole next job (or throws, and nothing changes), then one `save(next)`
+— a single `setGigs` — replaces it. Every page reading `gigs` (job detail, Find work, My jobs)
+re-renders from the same array, so there are no copies to keep in sync:
+
+```jsx
+const { gigs, save } = useGigs()
+const gig = gigs.find((g) => g.id === gigId)
+save(withAcceptedOffer(gig, offer.id))        // Find work: filter(gigs…)  My jobs: gigs.filter((g) => isPoster(g, user))
+```
+
+Only the poster is shown the offer list and the poster's buttons — in Phase 1 the rule lives in
+the interface; in Phase 2 the API enforces it and `save` becomes a request.
 
 ## House rule
 
