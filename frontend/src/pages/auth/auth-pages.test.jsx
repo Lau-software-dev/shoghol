@@ -1,32 +1,29 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
+import { useAuth } from '../../auth/AuthContext'
 import AuthProvider from '../../auth/AuthProvider'
+import { DEMO_PASSWORD } from '../../auth/demoUsers'
 import RequireAuth from '../../auth/RequireAuth'
 import { validateRegister } from '../../auth/validateRegister'
 import RegisterPage from './RegisterPage'
 import SignInPage from './SignInPage'
 
-const EMMA = { id: 'u1', name: 'Emma Chakkour', initials: 'EC', email: 'emma.chakkour@lau.edu', skills: 'Design' }
-
-/** Stubs fetch with "METHOD /api/path" → { status, body }. Unlisted routes 404. */
-function stubApi(routes) {
-  const fetch = vi.fn(async (url, init = {}) => {
-    const hit = routes[`${init.method ?? 'GET'} ${url}`] ?? { status: 404, body: { success: false, code: 'not_found' } }
-    const { status = 200, body } = typeof hit === 'function' ? hit(JSON.parse(init.body ?? '{}')) : hit
-    return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
-  })
-  vi.stubGlobal('fetch', fetch)
-  return fetch
+const Where = () => {
+  const { user } = useAuth()
+  return (
+    <>
+      <p data-testid="where">{useLocation().pathname}</p>
+      <p data-testid="who">{user ? `${user.name} <${user.email}> ${user.initials}` : 'nobody'}</p>
+    </>
+  )
 }
 
-const Where = () => <p data-testid="where">{useLocation().pathname}</p>
-
-function renderAt(path) {
+function renderAt(path, initialUser) {
   return render(
     <MemoryRouter initialEntries={[path]}>
-      <AuthProvider>
+      <AuthProvider initialUser={initialUser}>
         <Routes>
           <Route path="/signin" element={<SignInPage />} />
           <Route path="/register" element={<RegisterPage />} />
@@ -45,14 +42,16 @@ function renderAt(path) {
   )
 }
 
-afterEach(() => vi.unstubAllGlobals())
+async function fillRegister(user, { name, email, skills, password }) {
+  await user.type(await screen.findByLabelText(/full name/i), name)
+  await user.type(screen.getByLabelText(/university email/i), email)
+  await user.type(screen.getByLabelText(/what you do/i), skills)
+  await user.type(screen.getByLabelText(/password/i), password)
+  await user.click(screen.getByRole('button', { name: 'Create account' }))
+}
 
 describe('sign in', () => {
   it('shows the rejected state without saying which half was wrong', async () => {
-    stubApi({
-      'GET /api/auth/me': { body: { user: null } },
-      'POST /api/auth/login': { status: 401, body: { success: false, code: 'wrong_login', message: 'x' } },
-    })
     renderAt('/signin')
     const user = userEvent.setup()
     await user.type(await screen.findByLabelText(/university email/i), 'emma.chakkour@lau.edu')
@@ -63,31 +62,42 @@ describe('sign in', () => {
     expect(alert).not.toHaveTextContent(/password is wrong|no account/i)
   })
 
+  it('gives the same answer for an email with no account', async () => {
+    renderAt('/signin')
+    const user = userEvent.setup()
+    await user.type(await screen.findByLabelText(/university email/i), 'nobody@lau.edu')
+    await user.type(screen.getByLabelText(/password/i), DEMO_PASSWORD)
+    await user.click(screen.getByRole('button', { name: 'Sign in' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('That email and password do not match')
+  })
+
   it('sends a signed-out visitor to sign in, then back where they were going', async () => {
-    const fetch = stubApi({
-      'GET /api/auth/me': { body: { user: null } },
-      'POST /api/auth/login': { body: { user: EMMA } },
-    })
     renderAt('/post')
     const user = userEvent.setup()
-    await user.type(await screen.findByLabelText(/university email/i), 'emma.chakkour@lau.edu')
-    await user.type(screen.getByLabelText(/password/i), 'hunter22!')
+    await user.type(await screen.findByLabelText(/university email/i), 'Emma.Chakkour@lau.edu')
+    await user.type(screen.getByLabelText(/password/i), DEMO_PASSWORD)
     await user.click(screen.getByRole('button', { name: 'Sign in' }))
     expect(await screen.findByText('post form')).toBeInTheDocument()
-    const [, init] = fetch.mock.calls.find(([url]) => url === '/api/auth/login')
-    expect(JSON.parse(init.body)).toEqual({ email: 'emma.chakkour@lau.edu', password: 'hunter22!' })
+  })
+
+  it('fills the form from a demo account', async () => {
+    renderAt('/signin')
+    const user = userEvent.setup()
+    await user.click(await screen.findByRole('button', { name: 'Karim Hawa' }))
+    expect(screen.getByLabelText(/university email/i)).toHaveValue('karim.hawa@lau.edu')
+    await user.click(screen.getByRole('button', { name: 'Sign in' }))
+    expect(await screen.findByTestId('who')).toHaveTextContent('Karim Hawa <karim.hawa@lau.edu> KH')
   })
 
   it('skips the form when already signed in', async () => {
-    stubApi({ 'GET /api/auth/me': { body: { user: EMMA } } })
-    renderAt('/signin')
+    renderAt('/signin', 'emma.chakkour@lau.edu')
     expect(await screen.findByTestId('where')).toHaveTextContent('/')
+    expect(screen.getByTestId('who')).toHaveTextContent('Emma Chakkour')
   })
 })
 
 describe('register', () => {
-  it('validates on the field, wired for screen readers, without calling the server', async () => {
-    const fetch = stubApi({ 'GET /api/auth/me': { body: { user: null } } })
+  it('validates on the field, wired for screen readers, without creating an account', async () => {
     renderAt('/register')
     const user = userEvent.setup()
     await user.type(await screen.findByLabelText(/university email/i), 'emma@gmail.com')
@@ -97,39 +107,23 @@ describe('register', () => {
     expect(email).toHaveAttribute('aria-invalid', 'true')
     expect(email).toHaveAccessibleDescription('That is not an @lau.edu address.')
     expect(screen.getByLabelText(/full name/i)).toHaveFocus()
-    expect(fetch.mock.calls.some(([url]) => url === '/api/auth/signup')).toBe(false)
+    expect(screen.queryByTestId('who')).not.toBeInTheDocument()
   })
 
   it('puts a taken email back on the email field', async () => {
-    stubApi({
-      'GET /api/auth/me': { body: { user: null } },
-      'POST /api/auth/signup': { status: 409, body: { success: false, code: 'email_taken', message: 'An account already uses that email. Sign in instead.' } },
-    })
     renderAt('/register')
     const user = userEvent.setup()
-    await user.type(await screen.findByLabelText(/full name/i), 'Emma Chakkour')
-    await user.type(screen.getByLabelText(/university email/i), 'emma.chakkour@lau.edu')
-    await user.type(screen.getByLabelText(/what you do/i), 'Design')
-    await user.type(screen.getByLabelText(/password/i), 'hunter22!')
-    await user.click(screen.getByRole('button', { name: 'Create account' }))
+    await fillRegister(user, { name: 'Emma C', email: 'emma.chakkour@lau.edu', skills: 'Design', password: 'hunter22!' })
     await waitFor(() =>
       expect(screen.getByLabelText(/university email/i)).toHaveAccessibleDescription(/already uses that email/),
     )
   })
 
-  it('creates the account and lands signed in', async () => {
-    stubApi({
-      'GET /api/auth/me': { body: { user: null } },
-      'POST /api/auth/signup': { status: 201, body: { user: EMMA } },
-    })
+  it('creates the account, lands signed in, and the account works for sign-in afterwards', async () => {
     renderAt('/register')
     const user = userEvent.setup()
-    await user.type(await screen.findByLabelText(/full name/i), 'Emma Chakkour')
-    await user.type(screen.getByLabelText(/university email/i), 'emma.chakkour@lau.edu')
-    await user.type(screen.getByLabelText(/what you do/i), 'Design')
-    await user.type(screen.getByLabelText(/password/i), 'hunter22!')
-    await user.click(screen.getByRole('button', { name: 'Create account' }))
-    expect(await screen.findByTestId('where')).toHaveTextContent('/')
+    await fillRegister(user, { name: 'Rami Saad', email: 'rami.saad@lau.edu', skills: 'Video', password: 'hunter22!' })
+    expect(await screen.findByTestId('who')).toHaveTextContent('Rami Saad <rami.saad@lau.edu> RS')
   })
 })
 

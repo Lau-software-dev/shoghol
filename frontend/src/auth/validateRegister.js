@@ -1,4 +1,4 @@
-// Same rules as worker/lib/users.js. Checked here so mistakes show at once; the server checks again.
+// Registration rules. The page checks them so mistakes show at once; AuthProvider checks again on register.
 export function validateRegister(f) {
   const errors = {}
   if (f.name.trim().length < 2) errors.name = 'Enter your full name.'

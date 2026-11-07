@@ -10,10 +10,10 @@ import {
   withNewOffer,
   withRejectedOffer,
 } from '../domain/offers'
-import { ApiError } from './api'
+import { ApiError } from './errors'
 
 // Phase 1 stand-in for the gigs API: an in-memory board with the same calls and the same error shape
-// (ApiError with a code) the Express routes will have. Swap each body for api('/gigs/…') in Phase 2;
+// (ApiError with a code) the Express routes will have. Swap each body for a fetch to /api/gigs/… in Phase 2;
 // the pages do not change. The viewer is passed in here only because there is no server to read the
 // cookie — the real API takes it from the session.
 //

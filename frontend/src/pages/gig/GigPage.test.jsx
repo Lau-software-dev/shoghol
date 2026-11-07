@@ -4,7 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import AuthProvider from '../../auth/AuthProvider'
 import * as gigs from '../../lib/gigs'
-import { ApiError } from '../../lib/api'
+import { ApiError } from '../../lib/errors'
 import GigPage from './GigPage'
 import { validateOffer } from './validateOffer'
 
@@ -12,18 +12,10 @@ const EMMA = { id: 'u1', name: 'Emma Chakkour', initials: 'EC', email: 'emma.cha
 const STRANGER = { id: 'u9', name: 'Rami Saad', initials: 'RS', email: 'rami.saad@lau.edu' }
 const KARIM = { id: 'u2', name: 'Karim Hawa', initials: 'KH', email: 'karim.hawa@lau.edu' }
 
-/** Signs `who` in (or nobody) by answering /api/auth/me. */
-function signedInAs(who) {
-  vi.stubGlobal(
-    'fetch',
-    vi.fn(async () => new Response(JSON.stringify({ user: who }), { headers: { 'content-type': 'application/json' } })),
-  )
-}
-
-function renderGig(id = 'logo-student-club') {
+function renderGig(who, id = 'logo-student-club') {
   return render(
     <MemoryRouter initialEntries={[`/gigs/${id}`]}>
-      <AuthProvider>
+      <AuthProvider initialUser={who}>
         <Routes>
           <Route path="/gigs/:gigId" element={<GigPage />} />
           <Route path="/signin" element={<p>sign in page</p>} />
@@ -37,15 +29,11 @@ beforeEach(() => {
   gigs.resetGigs()
   gigs.setLatency(0)
 })
-afterEach(() => {
-  vi.unstubAllGlobals()
-  vi.restoreAllMocks()
-})
+afterEach(() => vi.restoreAllMocks())
 
 describe('the poster', () => {
   it('sees every offer, with accept and reject', async () => {
-    signedInAs(EMMA)
-    renderGig()
+    renderGig(EMMA)
     expect(await screen.findByText('You posted this.')).toBeInTheDocument()
     expect(screen.getByText('Four people have offered.')).toBeInTheDocument()
     expect(screen.getByText('Only you can read these')).toBeInTheDocument()
@@ -54,8 +42,7 @@ describe('the poster', () => {
   })
 
   it('accepting changes the whole screen: one accepted, the rest rejected, track moved, no actions left', async () => {
-    signedInAs(EMMA)
-    renderGig()
+    renderGig(EMMA)
     const user = userEvent.setup()
     await user.click(await screen.findByRole('button', { name: 'Accept Giovanny Raad’s offer' }))
 
@@ -69,9 +56,8 @@ describe('the poster', () => {
   })
 
   it('an accept the store refuses changes nothing on screen', async () => {
-    signedInAs(EMMA)
     vi.spyOn(gigs, 'acceptOffer').mockRejectedValue(new ApiError(409, 'not_open', 'This job is no longer taking offers.'))
-    renderGig()
+    renderGig(EMMA)
     const user = userEvent.setup()
     await user.click(await screen.findByRole('button', { name: 'Accept Karim Hawa’s offer' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('no longer taking offers')
@@ -80,8 +66,7 @@ describe('the poster', () => {
   })
 
   it('cancelling asks first, then stops the track', async () => {
-    signedInAs(EMMA)
-    renderGig()
+    renderGig(EMMA)
     const user = userEvent.setup()
     await user.click(await screen.findByRole('button', { name: 'Cancel job' }))
     expect(screen.getByText(/The 4 offers waiting on it will be turned down/)).toBeInTheDocument()
@@ -93,16 +78,14 @@ describe('the poster', () => {
 
 describe('another signed-in user', () => {
   it('sees only the count, never the offers', async () => {
-    signedInAs(STRANGER)
-    renderGig()
+    renderGig(STRANGER)
     expect(await screen.findByText('Four people have offered.')).toBeInTheDocument()
     expect(screen.queryByText('The offers')).not.toBeInTheDocument()
     expect(screen.queryByText(/debate society/)).not.toBeInTheDocument()
   })
 
   it('makes an offer, after which the form is gone and their offer shows as pending', async () => {
-    signedInAs(STRANGER)
-    renderGig()
+    renderGig(STRANGER)
     const user = userEvent.setup()
     await user.click(await screen.findByRole('button', { name: 'Make an offer' }))
     await user.click(screen.getByRole('button', { name: 'Send offer' }))
@@ -120,8 +103,7 @@ describe('another signed-in user', () => {
   })
 
   it('who already offered sees their own offer and no way to offer again', async () => {
-    signedInAs(KARIM)
-    renderGig()
+    renderGig(KARIM)
     expect(await screen.findByText('You offered.')).toBeInTheDocument()
     expect(screen.getByText(/debate society/)).toBeInTheDocument() // their own words
     expect(screen.queryByText(/Two concepts first/)).not.toBeInTheDocument() // not anyone else's
@@ -129,8 +111,7 @@ describe('another signed-in user', () => {
   })
 
   it('cannot offer on a job that is not open', async () => {
-    signedInAs(STRANGER)
-    renderGig('event-photos')
+    renderGig(STRANGER, 'event-photos')
     expect(await screen.findByText('This job is no longer taking offers.')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Make an offer' })).not.toBeInTheDocument()
   })
@@ -138,8 +119,7 @@ describe('another signed-in user', () => {
 
 describe('signed out', () => {
   it('shows the job with sign-in where the action would be', async () => {
-    signedInAs(null)
-    renderGig()
+    renderGig(null)
     expect(await screen.findByText('Sign in to offer on this job.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/signin')
     expect(screen.queryByRole('button', { name: 'Make an offer' })).not.toBeInTheDocument()
@@ -148,22 +128,19 @@ describe('signed out', () => {
 
 describe('data states', () => {
   it('shows a skeleton, then the job', async () => {
-    signedInAs(null)
-    renderGig()
+    renderGig(null)
     expect(screen.getByLabelText('Loading the job')).toBeInTheDocument()
     expect(await screen.findByRole('heading', { name: 'Logo for a student club' })).toBeInTheDocument()
   })
 
   it('says plainly when there is no such job', async () => {
-    signedInAs(null)
-    renderGig('nope')
+    renderGig(null, 'nope')
     expect(await screen.findByText('There is no job here')).toBeInTheDocument()
   })
 
   it('offers a retry when loading fails', async () => {
-    signedInAs(null)
     const get = vi.spyOn(gigs, 'getGig').mockRejectedValueOnce(new ApiError(0, 'offline', 'x'))
-    renderGig()
+    renderGig(null)
     const user = userEvent.setup()
     await user.click(await screen.findByRole('button', { name: 'Try again' }))
     expect(await screen.findByRole('heading', { name: 'Logo for a student club' })).toBeInTheDocument()
