@@ -5,6 +5,7 @@ import GigsProvider from './gigs/GigsProvider'
 import Layout from './layout/Layout'
 import RegisterPage from './pages/auth/RegisterPage'
 import SignInPage from './pages/auth/SignInPage'
+import BrowsePage from './pages/browse/BrowsePage'
 import GigPage from './pages/gig/GigPage'
 import Placeholder from './pages/Placeholder'
 import StatusTrackPreview from './pages/StatusTrackPreview'
@@ -20,7 +21,7 @@ export default function App() {
         <Routes>
           <Route element={<Layout />}>
             <Route index element={<Placeholder title="Home" spec="01-home.html" owner="TBD" />} />
-            <Route path="browse" element={<Placeholder title="Find work" spec="02-browse.html" owner="TBD" />} />
+            <Route path="browse" element={<BrowsePage />} />
             {/* Open to everyone: the page itself shows the signed-out variant. */}
             <Route path="gigs/:gigId" element={<GigPage />} />
             <Route
