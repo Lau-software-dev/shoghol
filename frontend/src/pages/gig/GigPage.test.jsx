@@ -1,10 +1,11 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import AuthProvider from '../../auth/AuthProvider'
-import * as gigs from '../../lib/gigs'
-import { ApiError } from '../../lib/errors'
+import { GIG_STATUS } from '../../domain/gigStatus'
+import { useGigs } from '../../gigs/GigsContext'
+import GigsProvider from '../../gigs/GigsProvider'
 import GigPage from './GigPage'
 import { validateOffer } from './validateOffer'
 
@@ -12,24 +13,27 @@ const EMMA = { id: 'u1', name: 'Emma Chakkour', initials: 'EC', email: 'emma.cha
 const STRANGER = { id: 'u9', name: 'Rami Saad', initials: 'RS', email: 'rami.saad@lau.edu' }
 const KARIM = { id: 'u2', name: 'Karim Hawa', initials: 'KH', email: 'karim.hawa@lau.edu' }
 
-function renderGig(who, id = 'logo-student-club') {
+// Another reader of the same state, standing in for Find work / My jobs.
+function LogoStatus() {
+  const { gigs } = useGigs()
+  return <p data-testid="elsewhere">{gigs.find((g) => g.id === 'logo-student-club').status}</p>
+}
+
+function renderGig(who, id = 'logo-student-club', gigsProps = {}) {
   return render(
     <MemoryRouter initialEntries={[`/gigs/${id}`]}>
       <AuthProvider initialUser={who}>
-        <Routes>
-          <Route path="/gigs/:gigId" element={<GigPage />} />
-          <Route path="/signin" element={<p>sign in page</p>} />
-        </Routes>
+        <GigsProvider delay={0} {...gigsProps}>
+          <Routes>
+            <Route path="/gigs/:gigId" element={<GigPage />} />
+            <Route path="/signin" element={<p>sign in page</p>} />
+          </Routes>
+          <LogoStatus />
+        </GigsProvider>
       </AuthProvider>
     </MemoryRouter>,
   )
 }
-
-beforeEach(() => {
-  gigs.resetGigs()
-  gigs.setLatency(0)
-})
-afterEach(() => vi.restoreAllMocks())
 
 describe('the poster', () => {
   it('sees every offer, with accept and reject', async () => {
@@ -55,14 +59,12 @@ describe('the poster', () => {
     expect(screen.getByRole('listitem', { current: 'step' })).toHaveTextContent('Assigned')
   })
 
-  it('an accept the store refuses changes nothing on screen', async () => {
-    vi.spyOn(gigs, 'acceptOffer').mockRejectedValue(new ApiError(409, 'not_open', 'This job is no longer taking offers.'))
+  it('the accept lands in the shared state, so every page reading it sees the job Assigned', async () => {
     renderGig(EMMA)
+    expect(screen.getByTestId('elsewhere')).toHaveTextContent(GIG_STATUS.OPEN)
     const user = userEvent.setup()
-    await user.click(await screen.findByRole('button', { name: 'Accept Karim Hawa’s offer' }))
-    expect(await screen.findByRole('alert')).toHaveTextContent('no longer taking offers')
-    expect(screen.getByText('You posted this.')).toBeInTheDocument()
-    expect(screen.queryByText('Rejected automatically')).not.toBeInTheDocument()
+    await user.click(await screen.findByRole('button', { name: 'Accept Lea Haddad’s offer' }))
+    expect(screen.getByTestId('elsewhere')).toHaveTextContent(GIG_STATUS.ASSIGNED)
   })
 
   it('cancelling asks first, then stops the track', async () => {
@@ -127,8 +129,8 @@ describe('signed out', () => {
 })
 
 describe('data states', () => {
-  it('shows a skeleton, then the job', async () => {
-    renderGig(null)
+  it('shows a skeleton while the jobs arrive, then the job', async () => {
+    renderGig(null, 'logo-student-club', { delay: 20 })
     expect(screen.getByLabelText('Loading the job')).toBeInTheDocument()
     expect(await screen.findByRole('heading', { name: 'Logo for a student club' })).toBeInTheDocument()
   })
@@ -139,12 +141,10 @@ describe('data states', () => {
   })
 
   it('offers a retry when loading fails', async () => {
-    const get = vi.spyOn(gigs, 'getGig').mockRejectedValueOnce(new ApiError(0, 'offline', 'x'))
-    renderGig(null)
+    renderGig(null, 'logo-student-club', { delay: 10, failFirst: true })
     const user = userEvent.setup()
     await user.click(await screen.findByRole('button', { name: 'Try again' }))
     expect(await screen.findByRole('heading', { name: 'Logo for a student club' })).toBeInTheDocument()
-    expect(get).toHaveBeenCalledTimes(2)
   })
 })
 

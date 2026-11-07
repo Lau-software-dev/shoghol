@@ -1,8 +1,10 @@
 import { useCallback, useMemo, useState } from 'react'
-import { ApiError } from '../lib/errors'
 import { AuthContext } from './AuthContext'
 import { DEMO_USERS, makeUser, publicUser } from './demoUsers'
 import { validateRegister } from './validateRegister'
+
+// Errors carry a code the pages switch on, and a message ready to show.
+const fail = (code, message) => Object.assign(new Error(message), { code })
 
 const findByEmail = (accounts, email) => accounts.find((a) => a.email === email.trim().toLowerCase())
 
@@ -29,7 +31,7 @@ export default function AuthProvider({ children, initialUser = null, accounts: s
       const account = findByEmail(accounts, email)
       // Same answer for an unknown email and a wrong password: never say which half was wrong.
       if (!account || account.password !== password)
-        throw new ApiError(401, 'wrong_login', 'That email and password do not match.')
+        throw fail('wrong_login', 'That email and password do not match.')
       setCurrentEmail(account.email)
       return publicUser(account)
     },
@@ -40,9 +42,9 @@ export default function AuthProvider({ children, initialUser = null, accounts: s
     async (fields) => {
       const errors = validateRegister(fields)
       const [field] = Object.keys(errors)
-      if (field) throw new ApiError(400, `bad_${field}`, errors[field])
+      if (field) throw fail(`bad_${field}`, errors[field])
       if (findByEmail(accounts, fields.email))
-        throw new ApiError(409, 'email_taken', 'An account already uses that email. Sign in instead.')
+        throw fail('email_taken', 'An account already uses that email. Sign in instead.')
       const account = makeUser(fields)
       setAccounts((list) => [...list, account])
       setCurrentEmail(account.email)

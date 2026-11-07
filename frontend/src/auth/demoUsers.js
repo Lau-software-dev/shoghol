@@ -1,5 +1,5 @@
 // Demo accounts for Phase 1. There is no server: these live in React state (see AuthProvider) and are
-// gone on reload. The names and emails match the posters and freelancers in lib/gigs.js, so signing
+// gone on reload. The names and emails match the posters and freelancers in gigs/seed.js, so signing
 // in as Emma makes you the poster of her jobs. Every demo account uses DEMO_PASSWORD.
 
 export const DEMO_PASSWORD = 'shoghol123'

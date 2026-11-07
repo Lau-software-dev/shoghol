@@ -40,6 +40,10 @@ Demo accounts (password `shoghol123` for all — the sign-in page has buttons th
 `njteh.balian@lau.edu`. Emma posted the logo and translation jobs, Karim the calculus one,
 Giovanny the photo one. Registering adds an account to state; a reload resets everything.
 
+Data states are simulated on purpose: jobs arrive after 400 ms (skeleton meanwhile).
+Add `?simulate=error` to any address to make the first load fail (then *Try again*), or
+`?simulate=slow` for a 2-second wait.
+
 The backend is kept for Phase 2 (`cd backend && npm install && npm run dev`, `npm test`).
 
 ## Frontend
@@ -53,13 +57,13 @@ Fonts (Chivo, Karla) are embedded in `frontend/src/fonts.css`, so it works offli
 frontend/src/
   domain/gigStatus.js        GIG_STATUS, trackFor(status), acceptsOffers(gig)
   domain/offers.js           the house rule as pure functions: withAcceptedOffer(gig, id), canOffer, isPoster…
-  lib/gigs.js                Phase 1 stand-in for the gigs API (getGig, makeOffer, acceptOffer…), demo jobs in memory
+  gigs/GigsProvider.jsx      the jobs: ONE array in useState, shared via context — useGigs() → { gigs, status, retry, save, add }
+  gigs/seed.js               the demo jobs it starts from
   components/Badge.jsx       status vocabulary — <Badge status="open" />, "accepted", "yours"…
   components/StatusTrack.jsx the signature component — <StatusTrack gig={gig} />
   components/TextField.jsx   labelled input; error wired with aria-invalid/-describedby
   components/Button.jsx      variants: propose, commit, secondary, quiet, destroy
   auth/                      AuthProvider (React state), demoUsers, useAuth(), RequireAuth, validateRegister
-  lib/errors.js              ApiError(status, code, message), thrown by the demo stores
   layout/                    site header (account menu) + page shell
   pages/                     surfaces (placeholders until built), auth pages, track preview
 ```
@@ -121,6 +125,23 @@ Controllers `fail(status, code, message)` and the error handler in `app.js` answ
   (`wrong_login`, `email_taken`, `bad_*`). In Phase 2, swap its three functions for API calls.
   Tests sign someone in with `<AuthProvider initialUser="emma.chakkour@lau.edu">`.
 - Not built: password reset and email verification.
+
+### Where the data lives (Phase 1)
+
+The jobs are one array in `useState` inside `GigsProvider`, shared through context, as the brief
+asks ("held in React state"). A page reads `gigs` and changes it in two steps: a pure rule from
+`domain/offers.js` builds the whole next job (or throws, and nothing changes), then one `save(next)`
+— a single `setGigs` — replaces it. Every page reading `gigs` (job detail, Find work, My jobs)
+re-renders from the same array, so there are no copies to keep in sync:
+
+```jsx
+const { gigs, save } = useGigs()
+const gig = gigs.find((g) => g.id === gigId)
+save(withAcceptedOffer(gig, offer.id))        // Find work: filter(gigs…)  My jobs: gigs.filter((g) => isPoster(g, user))
+```
+
+Only the poster is shown the offer list and the poster's buttons — in Phase 1 the rule lives in
+the interface; in Phase 2 the API enforces it and `save` becomes a request.
 
 ## House rule
 

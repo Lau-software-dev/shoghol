@@ -3,7 +3,7 @@ import Button from '../../components/Button'
 import TextField from '../../components/TextField'
 import { NOTE_MAX, validateOffer } from './validateOffer'
 
-/** The offer form. onSubmit({ amount, days, message }) may throw an ApiError; its message is shown. */
+/** The offer form. onSubmit({ amount, days, message }) may throw a RuleError; its message is shown. */
 export default function OfferForm({ budget, onSubmit, onCancel }) {
   const [fields, setFields] = useState({ amount: String(budget), days: '', message: '' })
   const [errors, setErrors] = useState({})
