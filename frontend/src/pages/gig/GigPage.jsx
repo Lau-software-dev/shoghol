@@ -8,7 +8,7 @@ import { buttonClass } from '../../components/buttonStyles'
 import { acceptsOffers } from '../../domain/gigStatus'
 import { isPoster } from '../../domain/offers'
 import * as gigs from '../../lib/gigs'
-import { longDate, money, shortDate } from './format'
+import { longDate, money, shortDate } from '../../lib/format'
 import OfferList from './OfferList'
 import ViewerPanel from './ViewerPanel'
 

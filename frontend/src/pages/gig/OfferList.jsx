@@ -1,7 +1,7 @@
 import Badge from '../../components/Badge'
 import Button from '../../components/Button'
 import { OFFER_STATUS } from '../../domain/offers'
-import { inDays, initials, money, theOthers } from './format'
+import { inDays, initials, money, theOthers } from '../../lib/format'
 
 const ROW = 'flex flex-wrap items-start gap-4 rounded-card border bg-paper p-4'
 
