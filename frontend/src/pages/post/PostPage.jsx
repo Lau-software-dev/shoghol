@@ -32,7 +32,6 @@ export default function PostPage() {
             <option key={cat}>{cat}</option>
           ))}
         </TextField>
-
       </form>
     </section>
   )
