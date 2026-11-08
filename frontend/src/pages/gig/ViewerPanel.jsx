@@ -5,7 +5,7 @@ import Button from '../../components/Button'
 import { buttonClass } from '../../components/buttonStyles'
 import { GIG_STATUS, acceptsOffers } from '../../domain/gigStatus'
 import { OFFER_STATUS, acceptedOffer, canOffer, isPoster, offerBy } from '../../domain/offers'
-import { peopleOffered } from './format'
+import { peopleOffered } from '../../lib/format'
 import OfferForm from './OfferForm'
 import { OfferRow } from './OfferList'
 

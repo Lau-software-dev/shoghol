@@ -16,7 +16,7 @@ import {
   withRejectedOffer,
 } from '../../domain/offers'
 import { useGigs } from '../../gigs/GigsContext'
-import { longDate, money, shortDate } from './format'
+import { longDate, money, shortDate } from '../../lib/format'
 import OfferList from './OfferList'
 import ViewerPanel from './ViewerPanel'
 

@@ -7,15 +7,16 @@ const INPUT =
 const OK = 'border-line focus:border-brand-500 focus:ring-brand-100'
 const BAD = 'border-red-500 focus:border-red-600 focus:ring-red-100'
 
-export default function TextField({ label, hint, error, id, multiline = false, ...inputProps }) {
+// `select` draws a dropdown (its <option>s go in as children); `className` sizes the field in its row.
+export default function TextField({ label, hint, error, id, multiline = false, select = false, className = '', ...inputProps }) {
   const autoId = useId()
   const fieldId = id ?? autoId
   const msgId = `${fieldId}-msg`
   const message = error || hint
-  const Input = multiline ? 'textarea' : 'input'
+  const Input = multiline ? 'textarea' : select ? 'select' : 'input'
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className={`flex flex-col gap-1.5 ${className}`}>
       <label htmlFor={fieldId} className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted">
         {label}
       </label>

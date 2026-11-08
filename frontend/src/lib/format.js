@@ -1,4 +1,4 @@
-// Display helpers for the job detail page.
+// Display helpers shared by every page that shows jobs.
 
 export const money = (amount) => `$${amount.toLocaleString('en-US')}`
 
@@ -22,7 +22,15 @@ export const shortDate = (iso) => localDate(iso).toLocaleDateString('en-GB', { d
 /** "29 November" */
 export const longDate = (iso) => localDate(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })
 
-export const inDays = (days) => (days === 1 ? 'in 1 day' : `in ${days} days`)
+/** Whole days from today to the date: 0 today, 1 tomorrow, -1 yesterday. */
+export function daysUntil(iso) {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  // round, not floor: a day is 23 or 25 hours when the clocks change
+  return Math.round((localDate(iso) - today) / 86_400_000)
+}
+
+export const inDays =(days) => (days === 1 ? 'in 1 day' : `in ${days} days`)
 
 const WORDS = ['No one', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten']
 
