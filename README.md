@@ -15,14 +15,13 @@ backend/    Node + Express 5 + MongoDB (Mongoose) — JWT cookie auth (not wired
 
 | Surface | Spec | Route | Owner |
 |---|---|---|---|
-| Home | `01-home.html` | `/` | TBD |
-| Find work | `02-browse.html` | `/browse` | TBD |
+| Home | `01-home.html` | `/` |Emma |
+| Find work | `02-browse.html` | `/browse` |. |
 | Job detail | `03-gig.html` | `/gigs/:gigId` | Karim |
-| Post a job | `04-post.html` | `/post` | TBD |
-| My jobs | `05-mine.html` | `/mine` | TBD |
-| Sign in & register | `06-auth.html` | `/signin`, `/register` | Karim |
-| Status track (shared) | `components.html` | `/dev/status-track` (preview) | Karim |
-| Auth API + session (shared) | — | `/api/auth/*` | Karim |
+| Post a job | `04-post.html` | `/post` | .m |
+| My jobs | `05-mine.html` | `/mine` | . |
+| Sign in & register | `06-auth.html` | `/signin`, `/register` | Karim|
+| Status track (shared) | `components.html` | `/dev/status-track` (preview) |. |
 
 ## Run it
 
