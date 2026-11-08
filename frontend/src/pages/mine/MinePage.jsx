@@ -2,6 +2,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
 import { isPoster, offerBy } from '../../domain/offers'
 import { useGigs } from '../../gigs/GigsContext'
+import OfferRow from './OfferRow'
 import PostedCard from './PostedCard'
 
 const newestFirst = (a, b) => b.postedAt.localeCompare(a.postedAt)
@@ -30,11 +31,10 @@ export default function MinePage() {
           ))}
         </ul>
       )}
-      {/* TODO(M3): the My offers rows */}
       {tab === 'offers' && (
         <ul className="mt-5 space-y-3">
           {offered.map((gig) => (
-            <li key={gig.id}>{gig.title}</li>
+            <OfferRow key={gig.id} gig={gig} offer={offerBy(gig, user)} />
           ))}
         </ul>
       )}
