@@ -7,6 +7,7 @@ import RegisterPage from './pages/auth/RegisterPage'
 import SignInPage from './pages/auth/SignInPage'
 import BrowsePage from './pages/browse/BrowsePage'
 import GigPage from './pages/gig/GigPage'
+import MinePage from './pages/mine/MinePage'
 import Placeholder from './pages/Placeholder'
 import StatusTrackPreview from './pages/StatusTrackPreview'
 
@@ -36,7 +37,7 @@ export default function App() {
               path="mine"
               element={
                 <RequireAuth>
-                  <Placeholder title="My jobs" spec="05-mine.html" owner="TBD" />
+                  <MinePage />
                 </RequireAuth>
               }
             />
