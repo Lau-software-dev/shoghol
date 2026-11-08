@@ -42,6 +42,21 @@ export default function GigRow({ gig, user }) {
   )
 }
 
+/** The row's shape in grey while the jobs load. The budget and offer blocks keep their place, so nothing
+ *  jumps when the real numbers arrive. */
+export function GigRowSkeleton() {
+  return (
+    <li className="flex items-center gap-5 rounded-card border border-line bg-paper px-5 py-4">
+      <div className="min-w-0 flex-1 space-y-2.5">
+        <span className="block h-5 w-2/5 animate-pulse rounded bg-line" />
+        <span className="block h-3.5 w-1/3 animate-pulse rounded bg-line" />
+      </div>
+      <span className="h-9 w-16 animate-pulse rounded bg-line" />
+      <span className="h-9 w-32 animate-pulse rounded bg-line" />
+    </li>
+  )
+}
+
 // "Is this mine?" — asked of the job and the viewer, every render.
 function RowAction({ gig, user }) {
   if (isPoster(gig, user)) return <Badge status="yours" />

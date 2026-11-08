@@ -1,10 +1,12 @@
 import { useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
-import GigRow from '../../components/GigRow'
+import ErrorState from '../../components/ErrorState'
+import GigRow, { GigRowSkeleton } from '../../components/GigRow'
 import { useGigs } from '../../gigs/GigsContext'
 import FilterBar from './FilterBar'
 import { filterGigs } from './filterGigs'
+import NoMatches from './NoMatches'
 import Pagination from './Pagination'
 
 const LINK = 'font-bold text-brand-700 underline decoration-accent-400 decoration-2 underline-offset-4'
@@ -15,7 +17,7 @@ const PER_PAGE = 10
 export default function BrowsePage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const { user } = useAuth()
-  const { gigs, status } = useGigs()
+  const { gigs, status, retry } = useGigs()
 
   const filters = Object.fromEntries(searchParams)
   const shown = filterGigs(gigs, filters)
@@ -50,6 +52,8 @@ export default function BrowsePage() {
     setSearchParams(next, { replace: key === 'q' && searchParams.has('q') })
   }
 
+  const clearFilters = () => setSearchParams({})
+
   // Arrives from a "posted by" link (My jobs); the filter bar has no control for it, so say it here.
   const posterName = filters.poster && gigs.find((g) => g.poster.email === filters.poster)?.poster.name
 
@@ -64,7 +68,7 @@ export default function BrowsePage() {
           filters={filters}
           count={status === 'ready' ? shown.length : null}
           onChange={setFilter}
-          onClear={() => setSearchParams({})}
+          onClear={clearFilters}
         />
         {filters.poster && (
           <p className="text-sm text-muted">
@@ -74,10 +78,25 @@ export default function BrowsePage() {
             </button>
           </p>
         )}
-        {/* TODO(step 8): designed loading, error and empty states */}
-        {status === 'loading' && <p className="text-sm text-muted">Loading…</p>}
-        {status === 'error' && <p className="text-sm text-red-700">The job board would not load.</p>}
-        {status === 'ready' && (
+        {/* The four data states. Loading and error come from GigsProvider (?simulate=slow, ?simulate=error). */}
+        {status === 'loading' && (
+          <ul aria-busy="true" aria-label="Loading jobs" className="space-y-3">
+            <GigRowSkeleton />
+            <GigRowSkeleton />
+            <GigRowSkeleton />
+          </ul>
+        )}
+        {status === 'error' && <ErrorState title="The job board would not load" onRetry={retry} />}
+        {status === 'ready' && shown.length === 0 && (
+          <NoMatches
+            gigs={gigs}
+            filters={filters}
+            posterName={posterName}
+            onChange={setFilter}
+            onClear={clearFilters}
+          />
+        )}
+        {status === 'ready' && shown.length > 0 && (
           <>
             <ul className="space-y-3">
               {onPage.map((gig) => (
