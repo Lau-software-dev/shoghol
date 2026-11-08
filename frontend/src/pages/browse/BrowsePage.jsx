@@ -78,6 +78,8 @@ export default function BrowsePage() {
             </button>
           </p>
         )}
+        {/* Rows and panels use <h3> like the design; this keeps the outline h1 → h2 → h3 for screen readers. */}
+        <h2 className="sr-only">Jobs</h2>
         {/* The four data states. Loading and error come from GigsProvider (?simulate=slow, ?simulate=error). */}
         {status === 'loading' && (
           <ul aria-busy="true" aria-label="Loading jobs" className="space-y-3">
