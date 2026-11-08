@@ -7,6 +7,7 @@ import RegisterPage from './pages/auth/RegisterPage'
 import SignInPage from './pages/auth/SignInPage'
 import BrowsePage from './pages/browse/BrowsePage'
 import GigPage from './pages/gig/GigPage'
+import Home from './pages/Home'
 import Placeholder from './pages/Placeholder'
 import StatusTrackPreview from './pages/StatusTrackPreview'
 
@@ -20,7 +21,7 @@ export default function App() {
         <GigsProvider delay={simulate === 'slow' ? 2000 : 400} failFirst={simulate === 'error'}>
         <Routes>
           <Route element={<Layout />}>
-            <Route index element={<Placeholder title="Home" spec="01-home.html" owner="TBD" />} />
+            <Route index element={<Home />} />
             <Route path="browse" element={<BrowsePage />} />
             {/* Open to everyone: the page itself shows the signed-out variant. */}
             <Route path="gigs/:gigId" element={<GigPage />} />
@@ -28,7 +29,7 @@ export default function App() {
               path="post"
               element={
                 <RequireAuth>
-                  <Placeholder title="Post a job" spec="04-post.html" owner="TBD" />
+                  <Placeholder title="Post a job" spec="04-post.html" owner="Emma" />
                 </RequireAuth>
               }
             />
