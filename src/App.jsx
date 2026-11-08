@@ -2,13 +2,14 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import Layout from './layout/Layout'
 import Placeholder from './pages/Placeholder'
 import StatusTrackPreview from './pages/StatusTrackPreview'
+import Home from './pages/Home' 
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route element={<Layout />}>
-          <Route index element={<Placeholder title="Home" spec="01-home.html" owner="Emma" />} />
+          <Route index element={<Home />} />
           <Route path="browse" element={<Placeholder title="Find work" spec="02-browse.html" owner="Giovanni" />} />
           <Route path="gigs/:gigId" element={<Placeholder title="Job detail" spec="03-gig.html" owner="Karim" />} />
           <Route path="post" element={<Placeholder title="Post a job" spec="04-post.html" owner="Emma" />} />
