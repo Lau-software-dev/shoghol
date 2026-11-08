@@ -1,14 +1,31 @@
 import { Link } from 'react-router-dom'
-import { buttonClass } from '../components/buttonStyles'
-import { useGigs } from '../gigs/GigsContext'
-import { GIG_STATUS } from '../domain/gigStatus'
-import { useAuth } from '../auth/AuthContext'
-import GigRow, { GigRowSkeleton } from '../components/GigRow'
-import ErrorState from '../components/ErrorState'
-import EmptyState from '../components/EmptyState'
+import { buttonClass } from '../../components/buttonStyles'
+import { useGigs } from '../../gigs/GigsContext'
+import { GIG_STATUS } from '../../domain/gigStatus'
+import { useAuth } from '../../auth/AuthContext'
+import GigRow, { GigRowSkeleton } from '../../components/GigRow'
+import ErrorState from '../../components/ErrorState'
+import EmptyState from '../../components/EmptyState'
+import StatusTrack from '../../components/StatusTrack'
+import RuleCard from './RuleCard'
+
+const RULES = [
+  {
+    title: 'Exactly one offer wins',
+    text: 'Accepting an offer rejects every other one, in the same action. There is no half-accepted job.',
+  },
+  {
+    title: 'A closed job takes no offers',
+    text: 'Once a job is closed, the offer form is gone — not greyed out, gone.',
+  },
+  {
+    title: 'You cannot bid on your own job',
+    text: 'You choose from the offers on jobs you post. You can’t make one on them yourself.',
+  },
+]
 
 
-export default function Home() {
+export default function HomePage() {
   const { gigs, status, retry } = useGigs()
   const openGigs = gigs.filter((gig) => gig.status === GIG_STATUS.OPEN).slice(0, 3)
   const { user } = useAuth()
@@ -69,6 +86,18 @@ export default function Home() {
             <ErrorState title="The open jobs would not load" onRetry={retry} />
           </div>
         )}
+      </section>
+      <section className="mt-16">
+        <h2 className="font-display text-2xl font-bold tracking-[-0.015em] text-ink">How a job runs</h2>
+        <StatusTrack
+          gig={{ status: GIG_STATUS.ASSIGNED }}
+          className="mt-6 rounded-card border border-line bg-paper p-6"
+        />
+        <div className="mt-6 grid gap-5 sm:grid-cols-3">
+          {RULES.map((rule) => (
+            <RuleCard key={rule.title} title={rule.title} text={rule.text} />
+          ))}
+        </div>
       </section>
     </>
   )
