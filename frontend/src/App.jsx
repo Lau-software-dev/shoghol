@@ -10,6 +10,8 @@ import GigPage from './pages/gig/GigPage'
 import HomePage from './pages/home/HomePage'
 import Placeholder from './pages/Placeholder'
 import StatusTrackPreview from './pages/StatusTrackPreview'
+import PostPage from './pages/post/PostPage'
+
 
 // Demo switches for the simulated data states: ?simulate=error fails the first load, ?simulate=slow waits 2s.
 const simulate = new URLSearchParams(window.location.search).get('simulate')
@@ -29,7 +31,7 @@ export default function App() {
               path="post"
               element={
                 <RequireAuth>
-                  <Placeholder title="Post a job" spec="04-post.html" owner="Emma" />
+                  <PostPage />
                 </RequireAuth>
               }
             />
