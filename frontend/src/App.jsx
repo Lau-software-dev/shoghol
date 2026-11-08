@@ -12,13 +12,14 @@ import Placeholder from './pages/Placeholder'
 import StatusTrackPreview from './pages/StatusTrackPreview'
 
 // Demo switches for the simulated data states: ?simulate=error fails the first load, ?simulate=slow waits 2s.
-const simulate = new URLSearchParams(window.location.search).get('simulate')
+// They combine — ?simulate=error,slow fails first, then Try again shows the skeleton for 2s.
+const simulate = new URLSearchParams(window.location.search).get('simulate') ?? ''
 
 export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <GigsProvider delay={simulate === 'slow' ? 2000 : 400} failFirst={simulate === 'error'}>
+        <GigsProvider delay={simulate.includes('slow') ? 2000 : 400} failFirst={simulate.includes('error')}>
         <Routes>
           <Route element={<Layout />}>
             <Route index element={<Placeholder title="Home" spec="01-home.html" owner="TBD" />} />

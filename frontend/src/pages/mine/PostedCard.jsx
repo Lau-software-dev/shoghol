@@ -46,6 +46,20 @@ export default function PostedCard({ gig }) {
   )
 }
 
+/** The card's shape in grey while the jobs load: badge line, title, details, then the track. */
+export function PostedCardSkeleton() {
+  return (
+    <li className="rounded-card border border-line bg-paper p-5">
+      <span className="block h-6 w-40 animate-pulse rounded bg-line" />
+      <span className="mt-2 block h-7 w-2/5 animate-pulse rounded bg-line" />
+      <span className="mt-1 block h-5 w-1/3 animate-pulse rounded bg-line" />
+      <div className="mt-5 border-t border-line pt-5">
+        <span className="block h-7 w-full animate-pulse rounded bg-line" />
+      </div>
+    </li>
+  )
+}
+
 // The line under the title, after the category.
 function detail(gig) {
   switch (gig.status) {
