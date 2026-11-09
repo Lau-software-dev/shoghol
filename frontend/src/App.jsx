@@ -7,9 +7,12 @@ import RegisterPage from './pages/auth/RegisterPage'
 import SignInPage from './pages/auth/SignInPage'
 import BrowsePage from './pages/browse/BrowsePage'
 import GigPage from './pages/gig/GigPage'
+import HomePage from './pages/home/HomePage'
 import MinePage from './pages/mine/MinePage'
 import Placeholder from './pages/Placeholder'
 import StatusTrackPreview from './pages/StatusTrackPreview'
+import PostPage from './pages/post/PostPage'
+
 
 // Demo switches for the simulated data states: ?simulate=error fails the first load, ?simulate=slow waits 2s.
 // They combine — ?simulate=error,slow fails first, then Try again shows the skeleton for 2s.
@@ -22,7 +25,7 @@ export default function App() {
         <GigsProvider delay={simulate.includes('slow') ? 2000 : 400} failFirst={simulate.includes('error')}>
         <Routes>
           <Route element={<Layout />}>
-            <Route index element={<Placeholder title="Home" spec="01-home.html" owner="TBD" />} />
+            <Route index element={<HomePage />} />
             <Route path="browse" element={<BrowsePage />} />
             {/* Open to everyone: the page itself shows the signed-out variant. */}
             <Route path="gigs/:gigId" element={<GigPage />} />
@@ -30,7 +33,7 @@ export default function App() {
               path="post"
               element={
                 <RequireAuth>
-                  <Placeholder title="Post a job" spec="04-post.html" owner="TBD" />
+                  <PostPage />
                 </RequireAuth>
               }
             />
