@@ -1,14 +1,13 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import TextField from '../../components/TextField'
 import { CATEGORIES } from '../../domain/categories'
 import Button from '../../components/Button'
 import { validateGig } from './validateGig'
-import { useNavigate } from 'react-router-dom'
+import { useBlocker, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
 import { useGigs } from '../../gigs/GigsContext'
 import { GIG_STATUS } from '../../domain/gigStatus'
 import ConfirmDialog from '../../components/ConfirmDialog'
-
 
 const EMPTY = { title: '', category: '', budget: '', wantedBy: '', description: '' }
 const NUMBER_WORDS = ['', 'One', 'Two', 'Three', 'Four', 'Five']
@@ -19,10 +18,26 @@ export default function PostPage() {
   const { user } = useAuth()
   const { add } = useGigs()
   const navigate = useNavigate()
-  const [leaving, setLeaving] = useState(false)
+  const posted = useRef(false)
 
   const count = Object.keys(errors).length
   const dirty = Object.keys(EMPTY).some((key) => fields[key] !== EMPTY[key])
+
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      dirty && !posted.current && currentLocation.pathname !== nextLocation.pathname,
+  )
+
+  useEffect(() => {
+    if (!dirty) return
+    function warn(e) {
+      e.preventDefault()
+      e.returnValue = ''
+    }
+    window.addEventListener('beforeunload', warn)
+    return () => window.removeEventListener('beforeunload', warn)
+  }, [dirty])
+
 
   function update(key, value) {
     setFields({ ...fields, [key]: value })
@@ -53,16 +68,12 @@ export default function PostPage() {
       offers: [],
     }
     add(gig)
+    posted.current = true
     navigate(`/gigs/${gig.id}`)
   }
 
   function leave() {
     navigate('/')
-  }
-
-  function handleCancel() {
-    if (dirty) setLeaving(true)
-    else leave()
   }
 
   return (
@@ -125,7 +136,7 @@ export default function PostPage() {
         />
         <div className="flex flex-wrap items-center gap-3 border-t border-line pt-6">
           <Button type="submit" variant="propose">Post the job</Button>
-          <Button variant="quiet" onClick={handleCancel}>Cancel</Button>
+          <Button variant="quiet" onClick={leave}>Cancel</Button>
           <span className="flex-1" />
           {count > 0 && (
             <span className="text-xs font-bold text-red-700">
@@ -135,12 +146,12 @@ export default function PostPage() {
         </div>
       </form>
       <ConfirmDialog
-        open={leaving}
+        open={blocker.state === 'blocked'}
         title="Leave without posting?"
         cancelLabel="Keep editing"
         confirmLabel="Discard"
-        onCancel={() => setLeaving(false)}
-        onConfirm={leave}
+        onCancel={() => blocker.reset()}
+        onConfirm={() => blocker.proceed()}
       >
         Nothing is saved until the job is on the board.
       </ConfirmDialog>
