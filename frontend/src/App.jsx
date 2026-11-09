@@ -8,12 +8,14 @@ import SignInPage from './pages/auth/SignInPage'
 import BrowsePage from './pages/browse/BrowsePage'
 import GigPage from './pages/gig/GigPage'
 import HomePage from './pages/home/HomePage'
+import MinePage from './pages/mine/MinePage'
 import Placeholder from './pages/Placeholder'
 import StatusTrackPreview from './pages/StatusTrackPreview'
 import PostPage from './pages/post/PostPage'
 
 // Demo switches for the simulated data states: ?simulate=error fails the first load, ?simulate=slow waits 2s.
-const simulate = new URLSearchParams(window.location.search).get('simulate')
+// They combine — ?simulate=error,slow fails first, then Try again shows the skeleton for 2s.
+const simulate = new URLSearchParams(window.location.search).get('simulate') ?? ''
 
 // A data router (createBrowserRouter), not <BrowserRouter>: Post a job needs useBlocker to warn before
 // leaving with unsaved changes, and useBlocker only works with a data router. Created once, outside App.
@@ -36,7 +38,7 @@ const router = createBrowserRouter(
         path="mine"
         element={
           <RequireAuth>
-            <Placeholder title="My jobs" spec="05-mine.html" owner="TBD" />
+            <MinePage />
           </RequireAuth>
         }
       />
@@ -51,7 +53,7 @@ const router = createBrowserRouter(
 export default function App() {
   return (
     <AuthProvider>
-      <GigsProvider delay={simulate === 'slow' ? 2000 : 400} failFirst={simulate === 'error'}>
+      <GigsProvider delay={simulate.includes('slow') ? 2000 : 400} failFirst={simulate.includes('error')}>
         <RouterProvider router={router} />
       </GigsProvider>
     </AuthProvider>

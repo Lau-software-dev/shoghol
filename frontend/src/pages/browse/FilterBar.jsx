@@ -1,10 +1,10 @@
 import Button from '../../components/Button'
 import TextField from '../../components/TextField'
+import { CATEGORIES } from '../../domain/categories' // the same list Post a job uses
 
 // The filter form on Find work (02-browse.html). It holds no state: it shows the filters it is given
 // and reports every change up to BrowsePage, which writes it into the URL.
 
-const CATEGORIES = ['Design', 'Web', 'Video', 'Writing', 'Tutoring']
 // [value in the URL, what the dropdown says]. An empty value means "no filter".
 const BUDGETS = [
   ['', 'Any'],
