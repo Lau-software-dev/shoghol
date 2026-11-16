@@ -17,7 +17,7 @@ export default function ConfirmDialog({ open, title, children, cancelLabel, conf
         e.preventDefault()
         onCancel()
       }}
-      className="w-full max-w-md overflow-hidden rounded-card bg-paper p-0 shadow-xl backdrop:bg-ink/50"
+      className="w-[calc(100%-2rem)] max-w-md overflow-hidden rounded-card bg-paper p-0 shadow-xl backdrop:bg-ink/50"
     >
       <h2 className="border-b border-line px-6 py-4 font-display text-lg font-bold tracking-tight text-ink">
         {title}
