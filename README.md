@@ -7,7 +7,7 @@ CSC443 Web Programming · Fall 2026 · Section 31
 | Member | Student ID |
 |---|---|
 | Emma Chakkour | 202305303 |
-| Karim Hawa | |
+| Karim Hawa | 202403573 |
 | Giovanny Raad | 202402756 |
 
 **Topic 04 — Freelance Gig Board** · brief reference `CSC443-F26 · T04 · rev A`
