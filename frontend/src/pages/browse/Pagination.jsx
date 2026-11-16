@@ -10,7 +10,7 @@ export default function Pagination({ page, pages, linkTo }) {
   const numbers = Array.from({ length: pages }, (_, i) => i + 1) // 4 pages → [1, 2, 3, 4]
 
   return (
-    <nav aria-label="Pagination" className="flex items-center gap-1.5">
+    <nav aria-label="Pagination" className="flex flex-wrap items-center gap-1.5">
       <Step to={page > 1 ? linkTo(page - 1) : null}>Previous</Step>
       {numbers.map((n) =>
         n === page ? (
