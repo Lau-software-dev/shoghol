@@ -9,7 +9,7 @@ const NAV = [
 ]
 
 const navClass = ({ isActive }) =>
-  `rounded px-3 py-2 text-sm font-bold ${
+  `shrink-0 whitespace-nowrap rounded px-3 py-2 text-sm font-bold ${
     isActive ? 'bg-ink text-paper' : 'text-muted hover:bg-surface hover:text-ink'
   }`
 
@@ -72,7 +72,7 @@ export default function SiteHeader() {
 
   return (
     <header className="border-b border-line bg-paper">
-      <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3.5">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3.5">
         <Link to="/" className="flex items-baseline gap-2">
           <span className="font-display text-xl font-bold tracking-[-0.03em] text-ink">Shoghol</span>
           <span className="hidden h-1.5 w-1.5 rounded-full bg-accent-400 sm:inline-block" />
@@ -80,7 +80,8 @@ export default function SiteHeader() {
             One job, one yes
           </span>
         </Link>
-        <nav aria-label="Main" className="ml-4 hidden gap-1 md:flex">
+        {/* On a phone the links drop to their own row under the logo, so every page stays one tap away. */}
+        <nav aria-label="Main" className="order-last -mx-3 flex w-full gap-1 overflow-x-auto md:order-none md:mx-0 md:ml-4 md:w-auto">
           {NAV.map((item) => (
             <NavLink key={item.to} to={item.to} className={navClass}>
               {item.label}

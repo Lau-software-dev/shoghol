@@ -67,12 +67,24 @@ function GigForm({ start, gig }) {
     return () => window.removeEventListener('beforeunload', warn)
   }, [dirty])
 
-  function update(key, value) {
-    setFields({ ...fields, [key]: value })
+  // Check one field against the same rules Post uses, and show or clear its message.
+  function check(key, values) {
+    const message = validateGig(values)[key]
     const rest = { ...errors }
-    delete rest[key]
+    if (message) rest[key] = message
+    else delete rest[key]
     setErrors(rest)
   }
+
+  // Validates as you type: a zero budget or a past date is flagged on the keystroke, and a fixed field clears.
+  function update(key, value) {
+    const next = { ...fields, [key]: value }
+    setFields(next)
+    check(key, next)
+  }
+
+  // Leaving a field you skipped (Tab past it) flags it too, without waiting for Post.
+  const blur = (key) => () => check(key, fields)
 
   function handleSubmit(e) {
     e.preventDefault()
@@ -135,6 +147,7 @@ function GigForm({ start, gig }) {
             id="post-title"
             value={fields.title}
             onChange={(e) => update('title', e.target.value)}
+            onBlur={blur('title')}
             error={errors.title}
           />
           <TextField
@@ -143,6 +156,7 @@ function GigForm({ start, gig }) {
             id="post-category"
             value={fields.category}
             onChange={(e) => update('category', e.target.value)}
+            onBlur={blur('category')}
             error={errors.category}
           >
             <option value="">Choose one</option>
@@ -156,6 +170,7 @@ function GigForm({ start, gig }) {
             id="post-budget"
             value={fields.budget}
             onChange={(e) => update('budget', e.target.value)}
+            onBlur={blur('budget')}
             error={errors.budget}
           />
           <TextField
@@ -164,6 +179,7 @@ function GigForm({ start, gig }) {
             id="post-wantedBy"
             value={fields.wantedBy}
             onChange={(e) => update('wantedBy', e.target.value)}
+            onBlur={blur('wantedBy')}
             error={errors.wantedBy}
           />
         </div>
@@ -176,6 +192,7 @@ function GigForm({ start, gig }) {
           id="post-description"
           value={fields.description}
           onChange={(e) => update('description', e.target.value)}
+          onBlur={blur('description')}
           error={errors.description}
         />
         <div className="flex flex-wrap items-center gap-3 border-t border-line pt-6">

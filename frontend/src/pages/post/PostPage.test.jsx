@@ -97,6 +97,31 @@ describe('posting a job', () => {
     expect(screen.getByText('Four fields need attention')).toBeInTheDocument()
   })
 
+  it('checks a field while you type, before Post is pressed', async () => {
+    const user = userEvent.setup()
+    renderPost()
+    await user.type(screen.getByLabelText('Budget'), '0')
+    expect(screen.getByText(/A budget of zero will not get offers/)).toBeInTheDocument()
+    expect(screen.getByLabelText('Budget')).toHaveAttribute('aria-invalid', 'true')
+    await user.type(screen.getByLabelText('Budget'), '5')
+    expect(screen.queryByText(/A budget of zero/)).not.toBeInTheDocument()
+
+    await user.type(screen.getByLabelText('Wanted by'), day(-1))
+    expect(screen.getByText('That date has gone. Pick today or later.')).toBeInTheDocument()
+  })
+
+  it('flags a field you skip past, and one you empty again', async () => {
+    const user = userEvent.setup()
+    renderPost()
+    await user.click(screen.getByLabelText('What do you need'))
+    await user.tab()
+    expect(screen.getByText('Say in one line what you need.')).toBeInTheDocument()
+    expect(screen.getByText('One field needs attention')).toBeInTheDocument()
+
+    await user.type(screen.getByLabelText('Describe it'), 'x{Backspace}')
+    expect(screen.getByText(/Describe the job/)).toBeInTheDocument()
+  })
+
   it('puts the job on the board and opens it, with you as the poster', async () => {
     const user = userEvent.setup()
     renderPost()
