@@ -88,6 +88,24 @@ describe('posting a job', () => {
     expect(screen.getByLabelText('What do you need')).toHaveFocus()
   })
 
+  it('starts with no errors, then checks a field as you type in it', async () => {
+    const user = userEvent.setup()
+    renderPost()
+    expect(screen.queryByText(/attention/)).not.toBeInTheDocument()
+
+    await user.type(screen.getByLabelText('Budget'), '0')
+    expect(screen.getByText(/A budget of zero will not get offers/)).toBeInTheDocument()
+    expect(screen.getByText('One field needs attention')).toBeInTheDocument()
+    // Fields not typed in yet stay quiet until submit.
+    expect(screen.queryByText('Say in one line what you need.')).not.toBeInTheDocument()
+
+    await user.type(screen.getByLabelText('Budget'), '5')
+    expect(screen.queryByText(/A budget of zero/)).not.toBeInTheDocument()
+
+    await user.type(screen.getByLabelText('Wanted by'), day(-2))
+    expect(screen.getByText('That date has gone. Pick today or later.')).toBeInTheDocument()
+  })
+
   it('clears a field’s error as soon as it is fixed', async () => {
     const user = userEvent.setup()
     renderPost()

@@ -36,21 +36,20 @@ function toFields(gig) {
   }
 }
 
-// The form for both posting and editing. `gig` is the job being edited, or null for a new job.
+
 function GigForm({ start, gig }) {
   const [fields, setFields] = useState(start)
-  const [errors, setErrors] = useState({})
+ 
+  const [touched, setTouched] = useState({})
   const { user } = useAuth()
   const { add, save } = useGigs()
   const navigate = useNavigate()
-  // Set just before going to the saved job's page, so the guard below lets that one move through.
   const saved = useRef(false)
-
+  const found = validateGig(fields)
+  const errors = Object.fromEntries(Object.entries(found).filter(([key]) => touched[key]))
   const count = Object.keys(errors).length
   const dirty = Object.keys(start).some((key) => fields[key] !== start[key])
 
-  // Ask before any move to another page (Cancel, a header link, Back) while the form is dirty.
-  // The address is compared with its ?edit= part, so editing → "Post a job" asks too.
   const blocker = useBlocker(({ currentLocation, nextLocation }) => {
     const from = currentLocation.pathname + currentLocation.search
     const to = nextLocation.pathname + nextLocation.search
@@ -69,15 +68,13 @@ function GigForm({ start, gig }) {
 
   function update(key, value) {
     setFields({ ...fields, [key]: value })
-    const rest = { ...errors }
-    delete rest[key]
-    setErrors(rest)
+    setTouched({ ...touched, [key]: true })
   }
 
   function handleSubmit(e) {
     e.preventDefault()
-    const found = validateGig(fields)
-    setErrors(found)
+    // Submitting counts as touching every field, so the ones never typed in show their errors too.
+    setTouched(Object.fromEntries(Object.keys(fields).map((key) => [key, true])))
     if (Object.keys(found).length > 0) {
       const first = Object.keys(found)[0]
       document.getElementById(`post-${first}`)?.focus()
@@ -92,7 +89,6 @@ function GigForm({ start, gig }) {
     }
     let id
     if (gig) {
-      // Editing: keep everything else on the job (id, poster, status, offers), change only the form's fields.
       save({ ...gig, ...changes })
       id = gig.id
     } else {
