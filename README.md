@@ -1,8 +1,20 @@
 # Shoghol — Topic 04, Freelance Gig Board
 
-CSC443 Web Programming · Fall 2026 · Team 404 — Emma Chakkour · Karim Hawa · Giovanny Raad
+CSC443 Web Programming · Fall 2026 · Section 31
 
-React rebuild of the design pack in `../topic-04-freelance-gig-board/` (the spec — not copied in).
+**Team 404**
+
+| Member | Student ID |
+|---|---|
+| Emma Chakkour | 202305303 |
+| Karim Hawa | |
+| Giovanny Raad | 202402756 |
+
+**Topic 04 — Freelance Gig Board** · brief reference `CSC443-F26 · T04 · rev A`
+
+**Live:** (Vercel link — coming)
+
+React rebuild of the Shoghol design pack (the spec — not copied in).
 
 ```
 frontend/   React 19 + Vite + Tailwind CSS 3.4.19 + React Router — runs on its own, demo data in React state
@@ -11,28 +23,60 @@ backend/    Node + Express 5 + MongoDB (Mongoose) — JWT cookie auth (not wired
 
 ## Who builds what
 
-> Agree this before writing code. The individual examination is built from this table.
+> The individual examination is built from this table. All paths are under `frontend/src/`.
 
-| Surface | Spec | Route | Owner |
-|---|---|---|---|
-| Home | `01-home.html` | `/` |Emma |
-| Find work | `02-browse.html` | `/browse` | Giovanni |
-| Job detail | `03-gig.html` | `/gigs/:gigId` | Karim |
-| Post a job | `04-post.html` | `/post` | Emma |
-| My jobs | `05-mine.html` | `/mine` | |
-| Sign in & register | `06-auth.html` | `/signin`, `/register` | Karim|
-| Status track (shared) | `components.html` | `/dev/status-track` (preview) |. |
+| Member | Surface | Spec | Route | Files |
+|---|---|---|---|---|
+| Emma Chakkour | Home | `01-home.html` | `/` | `pages/home/HomePage.jsx`, `pages/home/RuleCard.jsx` |
+| Emma Chakkour | Post a job (and edit) | `04-post.html` | `/post`, `/post?edit=:gigId` | `pages/post/PostPage.jsx`, `pages/post/validateGig.js`, `components/ConfirmDialog.jsx`, `domain/categories.js` |
+| Giovanny Raad | Find work | `02-browse.html` | `/browse` | `pages/browse/BrowsePage.jsx`, `pages/browse/FilterBar.jsx`, `pages/browse/filterGigs.js`, `pages/browse/NoMatches.jsx`, `pages/browse/Pagination.jsx`, `components/GigRow.jsx`, `lib/format.js` |
+| Giovanny Raad | My jobs | `05-mine.html` | `/mine`, `/mine?tab=offers` | `pages/mine/MinePage.jsx`, `pages/mine/PostedCard.jsx`, `pages/mine/OfferRow.jsx`, `components/EmptyState.jsx`, `components/ErrorState.jsx` |
+| Karim Hawa | Job detail | `03-gig.html` | `/gigs/:gigId` | `pages/gig/GigPage.jsx`, `pages/gig/ViewerPanel.jsx`, `pages/gig/OfferList.jsx`, `pages/gig/OfferForm.jsx`, `pages/gig/validateOffer.js` |
+| Karim Hawa | Sign in & register | `06-auth.html` | `/signin`, `/register` | `pages/auth/SignInPage.jsx`, `pages/auth/RegisterPage.jsx`, `pages/auth/AuthCard.jsx`, `auth/*` |
+| Karim Hawa | Status track (shared component) | `components.html` | `/dev/status-track` (preview) | `components/StatusTrack.jsx`, `domain/gigStatus.js`, `domain/offers.js`, `components/Badge.jsx`, `components/Button.jsx`, `components/TextField.jsx`, `layout/*` |
+
+Shared by everyone: `App.jsx` (routes), `gigs/GigsProvider.jsx` + `gigs/GigsContext.js` (the jobs in state,
+set up by Karim), `gigs/seed.js` (the 45 demo jobs, written by Giovanny), `components/buttonStyles.js`.
+
+## Entities
+
+| Entity | Fields |
+|---|---|
+| **User** | `id` (= email), `name`, `initials`, `email` (`@lau.edu`), `skills` ("what you do"), `password` |
+| **Job** (gig) | `id`, `title`, `category` (Design · Web · Video · Writing · Tutoring), `description`, `budget` (USD), `wantedBy` (date), `postedAt` (date), `poster` (`{ name, email }`), `status` (open → assigned → delivered → closed, or cancelled), `offers[]` |
+| **Offer** | `id`, `freelancer` (`{ name, email }`), `amount` (USD), `days`, `message`, `status` (pending · accepted · rejected · auto_rejected) |
+
+A job holds its offers; poster and freelancer point to users by email, so a job links to its poster's
+other jobs (`/browse?poster=…`) and an offer links back to its job.
 
 ## Run it
 
-The frontend needs no server: sign-in and jobs are demo data held in React state.
+You need Node.js 20.19+ (or 22.12+) and Git. The frontend needs no server: sign-in and jobs are demo data held in React state.
 
 ```sh
-cd frontend
+git clone https://github.com/Lau-software-dev/shoghol.git
+cd shoghol/frontend
 npm install
-npm run dev                # http://localhost:5173
-npm test
+npm run dev                # open http://localhost:5173
 ```
+
+`npm run build` makes the production build in `frontend/dist/`; `npm test` runs the tests.
+
+## Screenshots
+
+All in [`docs/screenshots/`](docs/screenshots/), taken at 1280px (desktop) and 390px (phone).
+
+| | |
+|---|---|
+| Home | ![Home](docs/screenshots/01-home.png) |
+| Find work | ![Find work](docs/screenshots/02-browse.png) |
+| Find work, filtered (`?cat=Web&min=100`) | ![Find work filtered](docs/screenshots/02-browse-filtered.png) |
+| Find work, loading / error / no matches | ![Loading](docs/screenshots/02-browse-loading.png) ![Error](docs/screenshots/02-browse-error.png) ![No matches](docs/screenshots/02-browse-empty.png) |
+| Job detail: signed out / another user / owner | ![Signed out](docs/screenshots/03-gig-signed-out.png) ![Other user](docs/screenshots/03-gig-other-user.png) ![Owner](docs/screenshots/03-gig-owner.png) |
+| Post a job, with errors | ![Post a job](docs/screenshots/04-post.png) |
+| My jobs: Posted / My offers | ![Posted](docs/screenshots/05-mine-posted.png) ![My offers](docs/screenshots/05-mine-offers.png) |
+| Sign in / register | ![Sign in](docs/screenshots/06-signin.png) ![Register](docs/screenshots/06-register.png) |
+| Phone (390px) | ![Find work on a phone](docs/screenshots/02-browse-phone.png) ![My jobs on a phone](docs/screenshots/05-mine-phone.png) |
 
 Demo accounts (password `shoghol123` for all — the sign-in page has buttons that fill them in):
 `emma.chakkour@lau.edu`, `karim.hawa@lau.edu`, `giovanny.raad@lau.edu`, `lea.haddad@lau.edu`,
