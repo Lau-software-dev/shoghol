@@ -12,7 +12,7 @@ CSC443 Web Programming · Fall 2026 · Section 31
 
 **Topic 04 — Freelance Gig Board** · brief reference `CSC443-F26 · T04 · rev A`
 
-**Live:** (Vercel link — coming)
+**Live:** https://shoghol-gamma.vercel.app
 
 React rebuild of the Shoghol design pack (the spec — not copied in).
 
